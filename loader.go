@@ -32,9 +32,26 @@ const (
 // Supported ELF section names and function how to create program of it type
 type programCreator func(name, license string, bytecode []byte) Program
 
+// TODO: Move this into another file (TC ACT)
+type tcACTProgram struct {
+	BaseProgram
+	sockFd int
+}
+func newTCAct(name, license string, bytecode []byte) Program {
+	return &tcACTProgram{
+		BaseProgram: BaseProgram{
+			name:        name,
+			license:     license,
+			bytecode:    bytecode,
+			programType: ProgramTypeSchedAct,
+		},
+	}
+}
+
 var sectionNameToProgramType = map[string]programCreator{
 	"xdp":           newXdpProgram,
 	"socket_filter": newSocketFilterProgram,
+	"tc_act": newTCAct,
 }
 
 // BPF instruction //
