@@ -32,26 +32,11 @@ const (
 // Supported ELF section names and function how to create program of it type
 type programCreator func(name, license string, bytecode []byte) Program
 
-// TODO: Move this into another file (TC ACT)
-type tcACTProgram struct {
-	BaseProgram
-	sockFd int
-}
-func newTCAct(name, license string, bytecode []byte) Program {
-	return &tcACTProgram{
-		BaseProgram: BaseProgram{
-			name:        name,
-			license:     license,
-			bytecode:    bytecode,
-			programType: ProgramTypeSchedAct,
-		},
-	}
-}
-
 var sectionNameToProgramType = map[string]programCreator{
 	"xdp":           newXdpProgram,
 	"socket_filter": newSocketFilterProgram,
-	"tc_act": newTCAct,
+	"action":        newTCAct,
+	"classifier":    newTCCls,
 }
 
 // BPF instruction //
@@ -163,7 +148,6 @@ func readRelocations(elfFile *elf.File, section *elf.Section) ([]relocationItem,
 
 func loadAndCreateMaps(elfFile *elf.File) (map[string]Map, error) {
 	// Read ELF symbols
-	fmt.Println(elfFile.Symbols())
 	symbols, err := elfFile.Symbols()
 	if err != nil {
 		return nil, fmt.Errorf("elf.Symbols() failed: %v", err)
@@ -186,7 +170,6 @@ func loadAndCreateMaps(elfFile *elf.File) (map[string]Map, error) {
 	// Read and parse map definitions from designated ELF section
 	mapsByIndex := []*EbpfMap{}
 	data, err := mapSection.Data()
-	fmt.Println(data)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to read '%s' section data: %v", mapSection.Name, err)
 	}
@@ -295,7 +278,6 @@ func loadPrograms(elfFile *elf.File, maps map[string]Map) (map[string]Program, e
 
 	// Find license information
 	license := ""
-	fmt.Println(elfFile.Sections)
 	for _, section := range elfFile.Sections {
 		if section.Name == LicenseSectionName {
 			data, err := section.Data()
