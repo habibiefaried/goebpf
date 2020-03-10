@@ -67,7 +67,9 @@ func (p *tcCLSProgram) Attach(data interface{}) error {
 	p.ElfFile = params.ElfFile
 
 	runCommand("tc qdisc add dev " + p.Iface + " clsact")
-	runCommand("tc filter add dev " + p.Iface + " bpf da obj " + p.ElfFile)
+	//runCommand("tc filter add dev " + p.Iface + " bpf da obj " + p.ElfFile)
+	runCommand("tc filter add dev "+p.Iface+" ingress bpf da obj "+p.ElfFile+" sec classifier")
+	runCommand("tc filter add dev "+p.Iface+" egress bpf da obj "+p.ElfFile+" sec classifier")
 	runCommand("tc filter show dev " + p.Iface)
 	return nil
 }
